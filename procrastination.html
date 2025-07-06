@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Procrastination Tool</title>
+
+    <!-- Google Fonts CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Mulish:wght@400;600&family=Patrick+Hand&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #F4F1FA;
+            --primary-accent: #FFB7B2;
+            --secondary-accent: #A3D5FF;
+            --cta-button: #FF6B6B;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --success-color: #9BE7A7;
+            --white: #FFFFFF;
+            --button-bar-height: 100px;
+
+            --font-header: 'DM Serif Display', serif;
+            --font-body: 'Mulish', sans-serif;
+            --font-letter: 'Patrick Hand', cursive;
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        #landingPage {
+            display: flex;
+            justify-content: center;
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        #letterViewPage {
+            justify-content: flex-start;
+            padding-bottom: var(--button-bar-height);
+            overflow-y: auto;
+        }
+        
+        /* THE CHANGE IS HERE: Thank you page now supports scrolling */
+        #thankYouPage {
+            justify-content: flex-start; /* Better for scrollable content */
+            overflow-y: auto;          /* Allows scrolling if letter is long */
+            padding-top: 5vh;          /* Consistent spacing */
+        }
+        
+        h1, h2, h3 {
+            font-family: var(--font-header);
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .task-input {
+            font-family: var(--font-body);
+            font-size: 1.2rem;
+            padding: 15px;
+            width: 80%;
+            max-width: 400px;
+            border: 2px solid var(--secondary-accent);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s;
+        }
+        .task-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--secondary-accent);
+        }
+
+        .btn {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-cta { background-color: var(--cta-button); color: var(--white); }
+        .btn-cta:hover { background-color: #e65a5a; transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); }
+        .btn-secondary { background-color: var(--white); color: var(--text-secondary); border: 1px solid #ccc; }
+        .btn-secondary:hover { background-color: #f0f0f0; }
+        .btn-success { background-color: var(--success-color); color: var(--text-primary); }
+        .btn-success:hover { background-color: #88d494; }
+
+        .letter-container {
+            background-color: #fffff7;
+            background-image:
+                linear-gradient(90deg, rgba(200, 200, 200, 0.08) 1px, transparent 1px),
+                linear-gradient(rgba(200, 200, 200, 0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 40px;
+            border-radius: 5px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 0 0 10px #fff;
+            max-width: 650px;
+            width: 90%;
+            text-align: left;
+            position: relative;
+            margin-top: 5vh;
+            margin-bottom: 20px;
+        }
+        .letter-container::before {
+            content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05); pointer-events: none;
+        }
+        
+        #thankYouPage .letter-container {
+            margin-top: 0;
+        }
+
+        .letter-content {
+            font-family: var(--font-letter);
+            font-size: 1.8rem;
+            line-height: 2.5rem;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+        
+        .letter-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            box-sizing: border-box;
+            background: linear-gradient(to top, rgba(244, 241, 250, 1) 70%, rgba(244, 241, 250, 0));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transform: translateY(100%);
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        #timerPage h2 { font-size: 2rem; max-width: 80%; }
+        .progress-bar-container { width: 80%; max-width: 500px; height: 20px; background-color: #e0e0e0; border-radius: 10px; margin: 30px 0; overflow: hidden; }
+        #progressBar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--secondary-accent), var(--primary-accent)); border-radius: 10px; }
+        #timerDisplay { font-family: var(--font-header); font-size: 4rem; margin-bottom: 20px; color: var(--text-primary); }
+        
+        #historyPanel {
+            position: fixed; top: 0; right: 0; width: 100%; max-width: 400px;
+            height: 100%; background-color: var(--white); box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transform: translateX(100%); transition: transform 0.4s ease-in-out;
+            z-index: 1000; display: flex; flex-direction: column;
+        }
+        #historyPanel.open { transform: translateX(0); }
+        .history-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .history-header h2 { margin: 0; }
+        #historyList { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        
+        .history-item {
+            background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 15px;
+            border-left: 5px solid var(--secondary-accent); cursor: pointer; transition: background-color 0.2s;
+        }
+        .history-item:hover { background-color: #e9e4f5; }
+        .history-item h3 { margin: 0 0 5px 0; font-family: var(--font-header); }
+        .history-item small { display: block; margin-bottom: 10px; color: var(--text-secondary); font-family: var(--font-body); }
+        .history-item p {
+            font-family: var(--font-letter); font-size: 1.2rem; line-height: 1.6rem;
+            white-space: pre-wrap; margin: 0; transition: -webkit-line-clamp 0.3s ease;
+        }
+        .history-item p.truncated {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            overflow: hidden;
+        }
+
+        #mailboxIcon { position: fixed; top: 20px; right: 20px; width: 30px; height: 30px; cursor: pointer; z-index: 999; opacity: 0; visibility: hidden; }
+        .close-icon { position: absolute; top: 15px; right: 15px; font-size: 2rem; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--cta-button); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <div id="landingPage" class="page">
+        <h1 id="main-header">ANTI-PROCRASTINATION</h1>
+        <h3>Stop Procrastination. Start doing</h3>
+        <input type="text" id="taskInput" class="task-input" placeholder="What are you procrastinating on?">
+        <button id="startButton" class="btn btn-cta">Start</button>
+    </div>
+
+    <div id="letterViewPage" class="page">
+        <div id="letterContainer" class="letter-container">
+            <p id="letterContent" class="letter-content"></p>
+        </div>
+        <div class="letter-actions">
+            <button id="startTimerButton" class="btn btn-cta">Start 5 Minutes Now</button>
+            <button id="cancelLetterButton" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+
+    <div id="timerPage" class="page">
+        <h2 id="timerTaskHeader">Focus for 5 minutes on:</h2>
+        <div id="timerDisplay">05:00</div>
+        <div class="progress-bar-container">
+            <div id="progressBar"></div>
+        </div>
+        <div>
+            <button id="timerCancelButton" class="btn btn-secondary">Cancel</button>
+            <button id="doneEarlyButton" class="btn btn-success">Done Early</button>
+        </div>
+    </div>
+
+    <div id="thankYouPage" class="page">
+        <div class="letter-container">
+            <span id="closeThankYou" class="close-icon">×</span>
+            <p id="thankYouLetterContent" class="letter-content"></p>
+        </div>
+    </div>
+    
+    <img id="mailboxIcon" src="https://cdn-icons-png.flaticon.com/512/893/893292.png" alt="Mailbox Icon" title="View History">
+    <div id="historyPanel">
+       <div class="history-header">
+           <h2>Your Letters</h2>
+           <span id="closeHistory" class="close-icon">×</span>
+       </div>
+       <div id="historyList"></div>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Your future self is writing a letter...</p>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_KEY = "AIzaSyAvblj3pfi_ufRwgFBFRTbyWh_mxYs2_yI";
+            const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+            const TIMER_DURATION = 300;
+
+            let currentTask = '';
+            let timerInterval;
+            let timerTween;
+            let letterHistory = [];
+            
+            const pages = {
+                landing: document.getElementById('landingPage'),
+                letterView: document.getElementById('letterViewPage'),
+                timer: document.getElementById('timerPage'),
+                thankYou: document.getElementById('thankYouPage'),
+            };
+            
+            const dom = {
+                taskInput: document.getElementById('taskInput'),
+                startButton: document.getElementById('startButton'),
+                letterContent: document.getElementById('letterContent'),
+                startTimerButton: document.getElementById('startTimerButton'),
+                cancelLetterButton: document.getElementById('cancelLetterButton'),
+                letterActions: document.querySelector('.letter-actions'),
+                timerTaskHeader: document.getElementById('timerTaskHeader'),
+                timerDisplay: document.getElementById('timerDisplay'),
+                progressBar: document.getElementById('progressBar'),
+                timerCancelButton: document.getElementById('timerCancelButton'),
+                doneEarlyButton: document.getElementById('doneEarlyButton'),
+                thankYouLetterContent: document.getElementById('thankYouLetterContent'),
+                closeThankYouButton: document.getElementById('closeThankYou'),
+                mailboxIcon: document.getElementById('mailboxIcon'),
+                historyPanel: document.getElementById('historyPanel'),
+                closeHistoryButton: document.getElementById('closeHistory'),
+                historyList: document.getElementById('historyList'),
+                loadingOverlay: document.getElementById('loadingOverlay'),
+            };
+
+            const showPage = (pageKey) => {
+                Object.values(pages).forEach(p => p.style.display = 'none');
+                pages[pageKey].style.display = 'flex';
+                gsap.set(pages[pageKey], { autoAlpha: 1 });
+            };
+
+            const showLoading = (show, message = "Wait a minute, magic is happening...") => {
+                dom.loadingOverlay.querySelector('p').textContent = message;
+                dom.loadingOverlay.style.display = show ? 'flex' : 'none';
+            };
+
+            const callGeminiAPI = async (prompt) => {
+                try {
+                    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                    });
+                    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                    const data = await response.json();
+                    if (data.candidates && data.candidates.length > 0) return data.candidates[0].content.parts[0].text;
+                    throw new Error("Invalid API response format");
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    alert("Sorry, I couldn't connect with your future self. Please try again.");
+                    return null;
+                }
+            };
+
+            const animateLandingPageIn = () => {
+                gsap.set(['#main-header', 'h3', '#taskInput', '#startButton'], { autoAlpha: 0, y: 30 });
+                gsap.set(dom.mailboxIcon, {autoAlpha: 0});
+                
+                const tl = gsap.timeline({ defaults: { duration: 0.6, ease: 'power2.out' } });
+                tl.to('#main-header', { autoAlpha: 1, y: 0 })
+                  .to('h3', { autoAlpha: 1, y: 0 }, '-=0.4')
+                  .to('#taskInput', { autoAlpha: 1, y: 0 }, '-=0.4')
+                  .to('#startButton', { autoAlpha: 1, y: 0 }, '-=0.4');
+                
+                gsap.to(dom.mailboxIcon, { autoAlpha: 1, duration: 0.5, delay: 0.8 });
+            };
+            
+            const handleStart = async () => {
+                currentTask = dom.taskInput.value.trim();
+                if (!currentTask) {
+                    gsap.fromTo(dom.taskInput, { x: -10 }, { x: 10, clearProps: "x", duration: 0.1, repeat: 5, yoyo: true });
+                    return;
+                }
+
+                showLoading(true);
+                
+                const prompts = [
+                    `The user is procrastinating on the task: "${currentTask}". Write a heartfelt, thoughtful letter from their future self, 10 years from now, warning them about the long-term negative consequences of not doing this task. Be emotional but empathetic, not shaming. End the letter with the line: "Even 5 minutes today can change everything." Keep the letter to a maximum of 200 words. Do not write a greeting like "Dear..." or "Hey...". Start directly with the main content.`,
+                    `The user is avoiding this task: "${currentTask}". Write a slightly playful but emotionally intelligent letter from their future self, 10 years later. Use a funny metaphor and remind them of missed opportunities, but keep an uplifting tone. End with the line: "Come on. Just 5 minutes. You’ve got this." Keep the letter concise, around 150-200 words. Do not write a greeting like "Dear..." or "Hey...". Start directly with the main content.`
+                ];
+                const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+                const generatedLetter = await callGeminiAPI(randomPrompt);
+                
+                showLoading(false);
+
+                if (generatedLetter) {
+                    const finalLetter = "Dear myself,\n\n" + generatedLetter.trim();
+                    
+                    saveToHistory(currentTask, finalLetter);
+                    dom.letterContent.innerText = finalLetter;
+
+                    gsap.to(pages.landing, { autoAlpha: 0, duration: 0.5, onComplete: () => {
+                        showPage('letterView');
+                        gsap.from("#letterContainer", { y: '50vh', scale: 0.8, opacity: 0, duration: 1, ease: 'power3.out' });
+                        
+                        gsap.to(dom.letterActions, {
+                            translateY: 0,
+                            autoAlpha: 1,
+                            duration: 0.7,
+                            ease: 'power2.out',
+                            delay: 0.5
+                        });
+                    }});
+                }
+            };
+            
+            const startTimer = () => {
+                dom.timerTaskHeader.innerText = `Focus for 5 minutes on: ${currentTask}`;
+                let timeLeft = TIMER_DURATION;
+                
+                dom.progressBar.style.width = '0%';
+                timerTween = gsap.to(dom.progressBar, { width: '100%', duration: TIMER_DURATION, ease: 'none' });
+
+                const updateDisplay = () => {
+                    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                    const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                    dom.timerDisplay.innerText = `${minutes}:${seconds}`;
+                }
+                updateDisplay();
+
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft <= 0) handleTimerCompletion();
+                }, 1000);
+            };
+            
+            const stopTimer = () => {
+                clearInterval(timerInterval);
+                if (timerTween) timerTween.kill();
+                timerInterval = null;
+                timerTween = null;
+            };
+
+            const handleTimerCompletion = async () => {
+                stopTimer();
+                showLoading(true, "Great job! You did well...");
+                
+                const thankYouPrompt = `Write a short, heartfelt thank-you letter from the future self to the past self, for finally taking the first step on "${currentTask}". Keep it about 100 words. Make it emotional and optimistic.`;
+                const thankYouLetter = await callGeminiAPI(thankYouPrompt);
+                
+                showLoading(false);
+
+                gsap.to(pages.timer, { autoAlpha: 0, duration: 0.5, onComplete: () => {
+                    if (thankYouLetter) {
+                        dom.thankYouLetterContent.innerText = thankYouLetter;
+                        showPage('thankYou');
+                        
+                        gsap.from("#thankYouPage .letter-container", { 
+                            y: '50vh',
+                            scale: 0.8,
+                            opacity: 0,
+                            duration: 1,
+                            ease: 'power3.out'
+                        });
+                    } else {
+                        alert("Couldn't generate a thank you note, but great job anyway!");
+                        resetToLanding();
+                    }
+                }});
+            };
+            
+            const resetToLanding = () => {
+                dom.taskInput.value = '';
+                currentTask = '';
+                showPage('landing');
+                animateLandingPageIn();
+            };
+            
+            const saveToHistory = (task, letter) => {
+                const historyEntry = { task, letter, timestamp: new Date().toISOString() };
+                letterHistory.unshift(historyEntry);
+                localStorage.setItem('antiProcrastinationHistory', JSON.stringify(letterHistory));
+            };
+
+            const renderHistory = () => {
+                dom.historyList.innerHTML = '';
+                if (letterHistory.length === 0) {
+                    dom.historyList.innerHTML = `<p style="color: var(--text-secondary);">Your past letters will appear here.</p>`;
+                    return;
+                }
+                
+                letterHistory.forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'history-item';
+                    const date = new Date(item.timestamp);
+                    const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    itemEl.innerHTML = `<h3>${item.task}</h3><small>${formattedDate}</small><p class="truncated">${item.letter}</p>`;
+                    itemEl.addEventListener('click', () => itemEl.querySelector('p').classList.toggle('truncated'));
+                    dom.historyList.appendChild(itemEl);
+                });
+            };
+
+            const toggleHistoryPanel = (open) => {
+                if(open) {
+                    renderHistory();
+                    dom.historyPanel.classList.add('open');
+                } else {
+                    dom.historyPanel.classList.remove('open');
+                }
+            };
+
+            // --- EVENT LISTENERS ---
+            dom.startButton.addEventListener('click', handleStart);
+            dom.taskInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleStart(); });
+            
+            dom.startTimerButton.addEventListener('click', () => {
+                gsap.to(pages.letterView, { autoAlpha: 0, duration: 0.5, onComplete: () => {
+                    showPage('timer');
+                    gsap.from("#timerPage > *", { scale: 0.8, opacity: 0, stagger: 0.1, duration: 0.6, ease: 'back.out(1.7)' });
+                    startTimer();
+                }});
+            });
+
+            dom.cancelLetterButton.addEventListener('click', () => {
+                const tl = gsap.timeline({ onComplete: resetToLanding });
+                tl.to("#letterContainer", { y: '-100vh', rotation: 15, opacity: 0, duration: 0.8, ease: 'power2.in' })
+                  .to(dom.letterActions, { translateY: '100%', autoAlpha: 0, duration: 0.5, ease: 'power2.in' }, '<');
+            });
+
+            dom.timerCancelButton.addEventListener('click', () => {
+                stopTimer();
+                gsap.to(pages.timer, { autoAlpha: 0, duration: 0.5, onComplete: resetToLanding });
+            });
+
+            dom.doneEarlyButton.addEventListener('click', handleTimerCompletion);
+
+            dom.closeThankYouButton.addEventListener('click', () => {
+                 gsap.to(pages.thankYou, { autoAlpha: 0, duration: 0.5, onComplete: resetToLanding });
+            });
+            
+            dom.mailboxIcon.addEventListener('click', () => toggleHistoryPanel(true));
+            dom.closeHistoryButton.addEventListener('click', () => toggleHistoryPanel(false));
+            
+            const init = () => {
+                localStorage.removeItem('antiProcrastinationHistory');
+                animateLandingPageIn();
+            };
+
+            init();
+        });
+    </script>
+</body>
+</html>
